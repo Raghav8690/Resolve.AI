@@ -57,8 +57,7 @@ def process_ticket(ticket_id: str) -> dict:
         final_action, flags = apply_guardrails(action, order, r["precedents"])
         guardrails = {"checked": True, "flags": flags}
         if final_action != action:
-            lane = "human"
-            r["reason"] = f"guardrail_block|{action}|{';'.join(flags)}"
+            r["reason"] = f"guardrail_applied|{action}->{final_action}|{';'.join(flags)}"
         action = final_action
     else:
         action = None
@@ -161,6 +160,7 @@ def list_tickets():
             "confidence": d.confidence,
             "pipeline": d.pipeline,
             "explanation": d.explanation,
+            "guardrail_flags": d.guardrail_flags,
         }
         for d in decisions
     ]

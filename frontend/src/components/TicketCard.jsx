@@ -25,9 +25,15 @@ export default function TicketCard({ ticket, isSelected, onClick }) {
         <ConfidenceBar confidence={ticket.confidence} size="sm" />
         <span className="ticket-conf-label">{Math.round(ticket.confidence * 100)}%</span>
       </div>
-      {lane === 'AUTO' && reason && <div className="ticket-reason">{reason}</div>}
-      {lane === 'HUMAN' && reason && (
+      {reason && (
         <div className="ticket-reason">{reason.split('|')[0].replace(/_/g, ' ')}</div>
+      )}
+      {ticket.lane === 'auto' && ticket.action === 'escalation' && (
+        <div className="ticket-flags">
+          {(ticket.guardrail_flags || []).map((f, i) => (
+            <span key={i} className="flag">{f.replace(/_/g, ' ')}</span>
+          ))}
+        </div>
       )}
     </div>
   );

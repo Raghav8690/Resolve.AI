@@ -84,8 +84,13 @@ export default function Board() {
   }, []);
 
   const autoTickets = tickets.filter((t) => t.lane === 'auto');
-  const humanTickets = tickets.filter((t) => t.lane === 'human');
+  const humanTickets = tickets.filter((t) => t.lane !== 'auto');
   const selectedId = selectedTicket?.ticket_id || null;
+
+  const handleReviewChange = useCallback(async (id, source) => {
+    await loadData();
+    if (id) selectTicket(id, source);
+  }, [loadData, selectTicket]);
 
   const renderLane = (laneTickets, onClickSource) => (
     <div className="ticket-list">
@@ -97,7 +102,7 @@ export default function Board() {
               <TicketCard ticket={t} isSelected={isSelected && !processing} onClick={selectTicket} />
               {isSelected && selectedTicket && (
                 <div className="card-detail">
-                  <TicketDetail ticket={selectedTicket} order={selectedOrder} />
+                  <TicketDetail ticket={selectedTicket} order={selectedOrder} onReviewChange={() => handleReviewChange(selectedTicket.ticket_id, onClickSource)} />
                 </div>
               )}
             </div>
@@ -152,7 +157,7 @@ export default function Board() {
               <span className="stat mini" style={{ color: '#666' }}>{board && board.pipeline_steps ? board.pipeline_steps.pending : 0} pending</span>
             </div>
           </div>
-          <IncomingQueue tickets={tickets} onSelect={selectTicket} selectedId={selectedId} selectedTicket={selectedTicket} selectedOrder={selectedOrder} processing={processing && selectedSource === 'queue'} />
+          <IncomingQueue tickets={tickets} onSelect={selectTicket} selectedId={selectedId} selectedTicket={selectedTicket} selectedOrder={selectedOrder} processing={processing && selectedSource === 'queue'} onReviewChange={handleReviewChange} />
         </section>
       )}
 

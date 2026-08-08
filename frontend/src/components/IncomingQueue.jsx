@@ -1,25 +1,91 @@
+import { useState, useEffect, useMemo } from 'react';
 import ConfidenceBar from './ConfidenceBar';
 import TicketDetail from './TicketDetail';
+import { api } from '../api';
 
 const STATUS_COLOR = {
   'auto-resolved': '#2e7d32',
   'human-review': '#e65100',
+  'review-submitted': '#ff8f00',
+  'resolved': '#2e7d32',
 };
 
-export default function IncomingQueue({ tickets, onSelect, selectedId, selectedTicket, selectedOrder, processing }) {
-  const sorted = [...tickets].sort((a, b) => (a.ticket_id < b.ticket_id ? -1 : 1));
+export default function IncomingQueue({ tickets, onSelect, selectedId, selectedTicket, selectedOrder, processing, onReviewChange }) {
+  const [query, setQuery] = useState('');
+  const [minConf, setMinConf] = useState(0);
+  const [maxConf, setMaxConf] = useState(100);
+  const [lane, setLane] = useState('all');
+  const [activeTags, setActiveTags] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+
+  useEffect(() => {
+    api.getReviewTags().then((r) => setAllTags(r.tags)).catch(() => {});
+  }, []);
+
+  const toggleTag = (tag) => {
+    setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  };
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase();
+    return [...tickets]
+      .filter((t) => Math.round(t.confidence * 100) >= minConf && Math.round(t.confidence * 100) <= maxConf)
+      .filter((t) => lane === 'all' || t.lane === lane)
+      .filter((t) => activeTags.length === 0 || (t.tags || []).some((tg) => activeTags.includes(tg)))
+      .filter((t) => !q || `${t.ticket_id} ${t.description} ${(t.tags || []).join(' ')}`.toLowerCase().includes(q))
+      .sort((a, b) => (a.ticket_id < b.ticket_id ? -1 : 1));
+  }, [tickets, query, minConf, maxConf, lane, activeTags]);
 
   return (
     <div className="queue-panel">
       <div className="queue-header">
         <h3>Incoming Ticket Queue</h3>
-        <div className="queue-badge">{sorted.length} new tickets</div>
+        <div className="queue-badge">{filtered.length} / {tickets.length} tickets</div>
       </div>
+
+      <div className="filter-bar">
+        <input
+          className="filter-input"
+          placeholder="Search ticket id, description, tag…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="filter-row">
+          <label className="filter-label">
+            Conf ≥
+            <input type="range" min="0" max="100" value={minConf} onChange={(e) => setMinConf(Number(e.target.value))} />
+            {minConf}%
+          </label>
+          <label className="filter-label">
+            ≤ <input type="range" min="0" max="100" value={maxConf} onChange={(e) => setMaxConf(Number(e.target.value))} />
+            {maxConf}%
+          </label>
+          <select className="filter-select" value={lane} onChange={(e) => setLane(e.target.value)}>
+            <option value="all">All lanes</option>
+            <option value="auto">Auto-resolved</option>
+            <option value="human">Human review</option>
+            <option value="review">In review (override)</option>
+          </select>
+        </div>
+        <div className="filter-tags">
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              className={`tag-chip ${activeTags.includes(tag) ? 'active' : ''}`}
+              onClick={() => toggleTag(tag)}
+            >
+              {tag.replace(/_/g, ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="queue-list">
-        {sorted.map((t) => {
+        {filtered.length === 0 && <div className="empty">No tickets match the filters</div>}
+        {filtered.map((t) => {
           const isSelected = t.ticket_id === selectedId;
           const isProcessing = processing && isSelected;
-          const showStatus = t.status === 'auto-resolved' ? 'AUTO' : 'HUMAN';
+          const showStatus = t.status === 'auto-resolved' ? 'AUTO' : t.status === 'resolved' ? 'RESOLVED' : 'HUMAN';
           return (
             <div key={t.ticket_id}>
               <div
@@ -39,12 +105,22 @@ export default function IncomingQueue({ tickets, onSelect, selectedId, selectedT
                 </div>
                 <div className="queue-sim">
                   <ConfidenceBar confidence={t.confidence} size="sm" />
-                  <span className="queue-agree">confidence {Math.round(t.confidence * 100)}% · agree {t.pipeline?.agreement ?? 0}/3</span>
+                  <span className="queue-agree">{Math.round(t.confidence * 100)}% · agree {t.pipeline?.agreement ?? 0}/3</span>
                 </div>
+                {(t.tags || []).length > 0 && (
+                  <div className="queue-tags">
+                    {(t.tags || []).map((tg) => (
+                      <span key={tg} className="mini-tag">{tg.replace(/_/g, ' ')}</span>
+                    ))}
+                  </div>
+                )}
+                {t.review_status === 'submitted' && (
+                  <div className="queue-review-note">Review note: {t.review_note}</div>
+                )}
               </div>
               {isSelected && selectedTicket && (
                 <div className="card-detail">
-                  <TicketDetail ticket={selectedTicket} order={selectedOrder} />
+                  <TicketDetail ticket={selectedTicket} order={selectedOrder} onReviewChange={() => onReviewChange && onReviewChange(selectedTicket.ticket_id, 'queue')} />
                 </div>
               )}
             </div>

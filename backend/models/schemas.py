@@ -42,9 +42,15 @@ class TicketDecision(BaseModel):
     explanation: str
     reply: Optional[str] = None
     guardrail_flags: List[str] = []
+    review_status: Optional[str] = None  # needs_review | submitted | approved
+    review_note: Optional[str] = None
     timestamp: datetime
     pipeline: Optional[dict] = None
     status: Optional[str] = None
+
+class ReviewSubmit(BaseModel):
+    action: str
+    note: str
 
 class BoardSummary(BaseModel):
     auto_resolved: int

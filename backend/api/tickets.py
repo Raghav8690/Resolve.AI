@@ -7,7 +7,7 @@ from backend.services.explanation import generate_explanation
 from backend.services.llm_reply import generate_reply
 from backend.services.decision_log import log_decision
 from backend.services.actions import simulate_action
-from backend.models.schemas import TicketDecision, BoardSummary, TicketDetailResponse, OrderContext, Precedent
+from backend.models.schemas import TicketDecision, BoardSummary, TicketDetailResponse, OrderContext, Precedent, ReviewSubmit
 from backend.config import SIMILARITY_THRESHOLD, TOP_K
 from datetime import datetime
 
@@ -19,6 +19,7 @@ similarity_engine.fit(resolved_df)
 _processed = {}
 _stream_order = list(new_with_orders_df['ticket_id'])
 _stream_idx = 0
+_review_queue = {}
 
 
 def _order_from_row(row) -> OrderContext:
@@ -93,6 +94,8 @@ def process_ticket(ticket_id: str) -> dict:
         "trace": _build_trace(row, details, r, lane, action, guardrails),
     }
     decision.status = "auto-resolved" if lane == "auto" else "human-review"
+    if lane == "human":
+        decision.review_status = "needs_review"
     log_decision(decision)
     _processed[row['ticket_id']] = decision
     return {"decision": decision, "trace": decision.pipeline["trace"]}
@@ -161,6 +164,10 @@ def list_tickets():
             "pipeline": d.pipeline,
             "explanation": d.explanation,
             "guardrail_flags": d.guardrail_flags,
+            "review_status": d.review_status,
+            "review_note": d.review_note,
+            "reply": d.reply,
+            "tags": _ticket_tags(d),
         }
         for d in decisions
     ]
@@ -191,6 +198,117 @@ def stream_next():
     }
 
 
+@router.get("/review/queue")
+def review_queue():
+    """All tickets with review status + tags. Supports filtering by tag, lane,
+    confidence range and free-text search (for the human review console).
+    """
+    out = []
+    for tid in _stream_order:
+        d = _processed.get(tid)
+        if d:
+            out.append(_ticket_summary(d))
+    return out
+
+
+@router.get("/review/tags")
+def review_tags():
+    """All distinct tags across tickets, so the human can build filter chips."""
+    tags = set()
+    for tid in _stream_order:
+        d = _processed.get(tid)
+        if d:
+            tags.update(_ticket_tags(d))
+    return {"tags": sorted(tags)}
+
+
+@router.post("/review/{ticket_id}")
+def submit_review(ticket_id: str, body: ReviewSubmit):
+    """Human writes (or overrides) a solution for ANY ticket. Stored as
+    submitted, awaiting approval — it only 'passes' after /approve.
+    Overriding an auto-resolved ticket is allowed: it goes back to review
+    and its new solution supersedes the AI's suggestion.
+    """
+    if ticket_id not in _stream_order:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    d = _processed.get(ticket_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Ticket not processed yet")
+    if d.review_status == "submitted":
+        raise HTTPException(status_code=400, detail="Solution already submitted, awaiting review")
+    if d.review_status == "approved":
+        raise HTTPException(status_code=400, detail="Ticket already approved")
+
+    order = _order_from_row(_row_for(ticket_id))
+    final_action, flags = apply_guardrails(body.action, order, d.precedents)
+    d.action = final_action
+    d.review_note = body.note
+    d.guardrail_flags = flags
+    d.review_status = "submitted"
+    d.status = "review-submitted"
+    d.lane = "review" if d.lane == "auto" else d.lane
+    if final_action != body.action:
+        d.pipeline["reason"] = f"guardrail_applied|{body.action}->{final_action}|{';'.join(flags)}"
+    log_decision(d)
+    return _ticket_summary(d)
+
+
+@router.post("/review/{ticket_id}/approve")
+def approve_review(ticket_id: str):
+    """Human reviews the submitted solution. On approval the action is applied
+    and the ticket passes — marked resolved, removed from review queue.
+    Handles both human-lane tickets and overridden auto/`review`-lane tickets.
+    """
+    if ticket_id not in _stream_order:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    d = _processed.get(ticket_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Ticket not processed yet")
+    if d.review_status != "submitted":
+        raise HTTPException(status_code=400, detail="No submitted solution to approve")
+
+    order = _order_from_row(_row_for(ticket_id))
+    simulate_action(d.action, ticket_id, order, d.precedents)
+    if not d.reply:
+        d.reply = generate_reply(ticket_id, d.description, d.action, order, d.precedents)
+    d.review_status = "approved"
+    d.status = "resolved"
+    d.lane = "auto"  # passed review -> leaves human queue, joins resolved board
+    log_decision(d)
+    return _ticket_summary(d)
+
+
+def _ticket_tags(d) -> list:
+    """Human-searchable tags derived from the ticket's routing + guardrails."""
+    tags = [d.lane, "confidence_" + str(round(d.confidence * 100))]
+    if d.action:
+        tags.append(d.action)
+    if d.review_status:
+        tags.append(d.review_status)
+    for flag in d.guardrail_flags:
+        tags.append(flag.replace("_", " "))
+    return tags
+
+
+def _ticket_summary(d):
+    return {
+        "ticket_id": d.ticket_id,
+        "order_id": d.order_id,
+        "description": d.description,
+        "lane": d.lane,
+        "status": d.status,
+        "action": d.action,
+        "confidence": d.confidence,
+        "pipeline": d.pipeline,
+        "explanation": d.explanation,
+        "guardrail_flags": d.guardrail_flags,
+        "review_status": d.review_status,
+        "review_note": d.review_note,
+        "reply": d.reply,
+        "tags": _ticket_tags(d),
+    }
+
+
 @router.get("/tickets/{ticket_id}", response_model=TicketDetailResponse)
 def get_ticket_detail(ticket_id: str):
     if ticket_id not in _stream_order:
@@ -205,6 +323,8 @@ def board_summary():
     decisions = [_processed[t] for t in _stream_order if t in _processed]
     auto = sum(1 for d in decisions if d.lane == "auto")
     human = sum(1 for d in decisions if d.lane == "human")
+    review_needs = sum(1 for d in decisions if d.review_status == "needs_review")
+    submitted = sum(1 for d in decisions if d.review_status == "submitted")
     return BoardSummary(
         auto_resolved=auto,
         human_review=human,
@@ -217,5 +337,7 @@ def board_summary():
             "matched": len(decisions),
             "guardrail_checked": auto,
             "llm_reply": len(decisions),
+            "review_needs": review_needs,
+            "review_submitted": submitted,
         },
     )

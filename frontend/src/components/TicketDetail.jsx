@@ -24,10 +24,9 @@ export default function TicketDetail({ ticket, order }) {
         </div>
         <ConfidenceBar confidence={ticket.confidence} size="md" />
         <div className="pipeline-metrics">
-          <div><span>Avg match</span><strong>{Math.round((pip.avg_distinct_similarity || 0) * 100)}%</strong></div>
-          <div><span>Closest precedent</span><strong>{Math.round((pip.top_similarity || 0) * 100)}%</strong></div>
+          <div><span>Confidence</span><strong>{Math.round(ticket.confidence * 100)}%</strong></div>
           <div><span>Agreement</span><strong>{pip.agreement}/3</strong></div>
-          <div><span>Threshold</span><strong>≥{pip.threshold}</strong></div>
+          <div><span>Threshold</span><strong>≥{Math.round((pip.threshold || 0) * 100)}%</strong></div>
           <div><span>Precedents</span><strong>{pip.matched}</strong></div>
         </div>
       </div>
@@ -61,7 +60,7 @@ export default function TicketDetail({ ticket, order }) {
           <div key={i} className="precedent-item">
             <div className="precedent-header">
               <span className="precedent-id">{p.ticket_id}</span>
-              <span className="precedent-sim">Sim: {(p.similarity * 100).toFixed(0)}%</span>
+              <span className="precedent-sim">CSAT {p.csat}/5</span>
             </div>
             <div className="precedent-desc">{p.description}</div>
             <div className="precedent-action">Action: {p.resolution_action.replace(/_/g, ' ')} | CSAT: {p.csat}/5</div>

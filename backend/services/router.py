@@ -1,6 +1,6 @@
 from backend.services.similarity import similarity_engine
 from backend.models.schemas import Precedent
-from backend.config import SIMILARITY_THRESHOLD, MIN_AGREEMENT, TOP_K
+from backend.config import SIMILARITY_THRESHOLD, MIN_AGREEMENT, TOP_K, AUTO_CONFIDENCE_THRESHOLD
 
 
 def check_agreement(precedents: list[Precedent]) -> tuple[bool, str]:
@@ -29,6 +29,11 @@ def compute_confidence(precedents: list[Precedent], agreement_count: int) -> flo
 
 
 def route_ticket(description: str) -> dict:
+    """Route on the raw top-k precedents. A ticket may only be AUTO-RESOLVED
+    when confidence >= AUTO_CONFIDENCE_THRESHOLD (0.8) AND the closest match
+    clears the similarity bar AND the top-3 agree on an action. Anything
+    below the confidence bar is routed to human review.
+    """
     precedents = similarity_engine.get_top_k(description)
     top_similarity = precedents[0].similarity if precedents else 0.0
 
@@ -41,13 +46,16 @@ def route_ticket(description: str) -> dict:
 
     agrees, agreed_action = check_agreement(precedents)
     agreement_count = sum(1 for p in precedents[:TOP_K] if p.resolution_action == agreed_action)
+    confidence = compute_confidence(precedents, agreement_count)
 
-    if top_similarity >= SIMILARITY_THRESHOLD and agrees:
-        lane, reason, auto = "auto", f"sim {top_similarity:.2f} >= {SIMILARITY_THRESHOLD}, {agreement_count}/{TOP_K} agree", True
+    if confidence >= AUTO_CONFIDENCE_THRESHOLD and agrees and top_similarity >= SIMILARITY_THRESHOLD:
+        lane, reason, auto = "auto", f"conf {confidence:.2f} >= {AUTO_CONFIDENCE_THRESHOLD}, {agreement_count}/{TOP_K} agree", True
         suggested = agreed_action
     else:
         lane, auto = "human", False
         reasons = []
+        if confidence < AUTO_CONFIDENCE_THRESHOLD:
+            reasons.append(f"low_confidence({confidence:.2f}<{AUTO_CONFIDENCE_THRESHOLD})")
         if top_similarity < SIMILARITY_THRESHOLD:
             reasons.append(f"low_similarity({top_similarity:.2f}<{SIMILARITY_THRESHOLD})")
         if not agrees:
@@ -55,7 +63,6 @@ def route_ticket(description: str) -> dict:
         reason = ";".join(reasons) if reasons else "no_precedents_found"
         suggested = agreed_action if agrees else None
 
-    confidence = compute_confidence(precedents, agreement_count)
     return {
         "lane": lane, "confidence": confidence, "precedents": precedents, "reason": reason,
         "auto": auto, "top_similarity": top_similarity, "agreement": agreement_count,

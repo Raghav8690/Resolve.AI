@@ -61,14 +61,14 @@ function StepContent({ stepKey, data }) {
       <div className="lf-body">
         <div className="lf-ish-meta">
           <div className="lf-stat"><span>pool</span><strong>{data.pool_size}</strong></div>
-          <div className="lf-stat"><span>avg sim</span><strong>{(data.top_similarity * 100).toFixed(0)}%</strong></div>
+          <div className="lf-stat"><span>matches</span><strong>{topK.length}</strong></div>
         </div>
         <div className="lf-ranks">
           {topK.slice(0, 3).map((p, i) => (
             <div key={i} className="lf-rank">
               <span className="lf-rank-id">{p.ticket_id}</span>
               <div className="lf-rank-bar"><div className="lf-rank-fill" style={{ width: `${Math.round(p.similarity * 100)}%` }} /></div>
-              <span className="lf-rank-score">{(p.similarity * 100).toFixed(0)}%</span>
+              <span className="lf-rank-score">#{i + 1}</span>
             </div>
           ))}
         </div>
@@ -82,7 +82,7 @@ function StepContent({ stepKey, data }) {
         <div className="lf-precedents">
           {topk.map((p, i) => (
             <div key={i} className="lf-prec">
-              <div className="lf-prec-line"><span className="lf-prec-id">{p.ticket_id}</span><span className="lf-prec-sim">{(p.similarity * 100).toFixed(0)}%</span></div>
+              <div className="lf-prec-line"><span className="lf-prec-id">{p.ticket_id}</span><span className="lf-prec-sim">#{i + 1}</span></div>
               <div className="lf-prec-desc">{p.description}</div>
               <div className="lf-prec-meta">{p.resolution_action.replace('_', ' ')} · CSAT {p.csat}/5</div>
             </div>
@@ -97,7 +97,7 @@ function StepContent({ stepKey, data }) {
       <div className="lf-body">
         <ConfidenceBar confidence={data.confidence} size="md" />
         <div className="lf-ish-meta">
-          <div className="lf-stat"><span>avg similarity</span><strong>{(data.avg_similarity * 100).toFixed(0)}%</strong></div>
+          <div className="lf-stat"><span>confidence</span><strong>{Math.round(data.confidence * 100)}%</strong></div>
           <div className="lf-stat"><span>agreement</span><strong>{data.agreement}/3</strong></div>
           <div className="lf-stat"><span>formula</span><strong className="sm">{data.formula}</strong></div>
         </div>

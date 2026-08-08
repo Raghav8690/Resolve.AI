@@ -62,7 +62,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .lane-header { padding: 14px 20px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
 .auto-lane .lane-header { background: #e8f5e9; color: #2e7d32; border-bottom: 2px solid #43a047; }
 .human-lane .lane-header { background: #fff3e0; color: #e65100; border-bottom: 2px solid #fb8c00; }
-.ticket-list { max-height: 520px; overflow-y: auto; }
+.ticket-list { max-height: 640px; overflow-y: auto; }
 .ticket-card { padding: 14px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.15s; }
 .ticket-card:last-child { border-bottom: none; }
 .ticket-card:hover { background: #fafafa; }
@@ -75,10 +75,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .ticket-description { color: #333; font-size: 13px; margin-bottom: 6px; line-height: 1.4; }
 .ticket-meta { display: flex; justify-content: space-between; font-size: 12px; color: #666; }
 .ticket-action { color: #1976d2; font-weight: 500; }
-.ticket-sim { color: #888; }
+.ticket-agree { color: #888; }
+.ticket-conf { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.ticket-conf-label { font-size: 12px; font-weight: 600; color: #1a1a1a; }
 .ticket-reason { font-size: 11px; color: #888; margin-top: 4px; font-style: italic; }
 
-.detail-panel { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px; margin-top: 8px; }
+.card-detail { padding: 12px 16px 16px; border-bottom: 1px solid #eee; animation: detail-in 0.18s ease; }
+@keyframes detail-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.detail-panel { background: #fbfdff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px; margin-top: 8px; border: 1px solid #e3f2fd; }
 .detail-section { margin-bottom: 20px; }
 .detail-section:last-child { margin-bottom: 0; }
 .detail-section h3 { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }

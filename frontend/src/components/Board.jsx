@@ -14,6 +14,7 @@ export default function Board() {
   const [board, setBoard] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedSource, setSelectedSource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -68,12 +69,13 @@ export default function Board() {
     };
   }, [loadData, handleTick]);
 
-  const selectTicket = useCallback(async (id) => {
+  const selectTicket = useCallback(async (id, source) => {
     setProcessing(true);
     try {
       const detail = await api.getTicket(id);
       setSelectedTicket(detail.ticket);
       setSelectedOrder(detail.order_context);
+      setSelectedSource(source);
     } catch (e) {
       console.error('Failed to load detail', e);
     } finally {
@@ -83,7 +85,27 @@ export default function Board() {
 
   const autoTickets = tickets.filter((t) => t.lane === 'auto');
   const humanTickets = tickets.filter((t) => t.lane === 'human');
-  const selectedId = selectedTicket?.ticket_id || (loading ? null : selectedTicket?.ticket_id);
+  const selectedId = selectedTicket?.ticket_id || null;
+
+  const renderLane = (laneTickets, onClickSource) => (
+    <div className="ticket-list">
+      {laneTickets.length === 0 ? <div className="empty">No tickets in this lane yet</div> : (
+        laneTickets.map((t) => {
+          const isSelected = t.ticket_id === selectedId && selectedSource === onClickSource;
+          return (
+            <div key={t.ticket_id} className="card-wrap">
+              <TicketCard ticket={t} isSelected={isSelected && !processing} onClick={selectTicket} />
+              {isSelected && selectedTicket && (
+                <div className="card-detail">
+                  <TicketDetail ticket={selectedTicket} order={selectedOrder} />
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
 
   return (
     <div className="container">
@@ -130,7 +152,7 @@ export default function Board() {
               <span className="stat mini" style={{ color: '#666' }}>{board && board.pipeline_steps ? board.pipeline_steps.pending : 0} pending</span>
             </div>
           </div>
-          <IncomingQueue tickets={tickets} onSelect={selectTicket} selectedId={selectedId} processing={processing} />
+          <IncomingQueue tickets={tickets} onSelect={selectTicket} selectedId={selectedId} selectedTicket={selectedTicket} selectedOrder={selectedOrder} processing={processing && selectedSource === 'queue'} />
         </section>
       )}
 
@@ -139,29 +161,14 @@ export default function Board() {
         <div className="board">
           <div className="lane auto-lane">
             <div className="lane-header">Auto-Resolved ({autoTickets.length})</div>
-            <div className="ticket-list">
-              {autoTickets.length === 0 ? <div className="empty">No auto-resolved tickets yet</div> : (
-                autoTickets.map((t) => (
-                  <TicketCard key={t.ticket_id} ticket={t} isSelected={t.ticket_id === selectedId} onClick={selectTicket} />
-                ))
-              )}
-            </div>
+            {renderLane(autoTickets, 'lane')}
           </div>
-
           <div className="lane human-lane">
             <div className="lane-header">Human Review ({humanTickets.length})</div>
-            <div className="ticket-list">
-              {humanTickets.length === 0 ? <div className="empty">No human review tickets yet</div> : (
-                humanTickets.map((t) => (
-                  <TicketCard key={t.ticket_id} ticket={t} isSelected={t.ticket_id === selectedId} onClick={selectTicket} />
-                ))
-              )}
-            </div>
+            {renderLane(humanTickets, 'lane')}
           </div>
         </div>
       </section>
-
-      <TicketDetail ticket={selectedTicket} order={selectedOrder} />
     </div>
   );
 }

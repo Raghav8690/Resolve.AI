@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from backend.services.data_loader import load_all
 from backend.services.similarity import similarity_engine
-from backend.services.router import route_ticket, compute_confidence
+from backend.services.router import route_ticket
 from backend.services.guardrails import apply_guardrails
 from backend.services.explanation import generate_explanation
 from backend.services.llm_reply import generate_reply
@@ -63,14 +63,6 @@ def process_ticket(ticket_id: str) -> dict:
     else:
         action = None
         flags = []
-
-    distinct = details["top_k"]
-    if distinct:
-        distinct_prec = [Precedent(**p) for p in distinct]
-        distinct_confidence = compute_confidence(distinct_prec, r["agreement"])
-    else:
-        distinct_confidence = 0.0
-    r["confidence"] = distinct_confidence
 
     explanation = generate_explanation(lane, action or "none", r["precedents"], r["reason"])
     reply = None

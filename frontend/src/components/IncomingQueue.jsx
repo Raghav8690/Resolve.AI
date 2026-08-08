@@ -50,16 +50,28 @@ export default function IncomingQueue({ tickets, onSelect, selectedId, selectedT
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <div className="filter-row">
-          <label className="filter-label">
-            Conf ≥
-            <input type="range" min="0" max="100" value={minConf} onChange={(e) => setMinConf(Number(e.target.value))} />
-            {minConf}%
-          </label>
-          <label className="filter-label">
-            ≤ <input type="range" min="0" max="100" value={maxConf} onChange={(e) => setMaxConf(Number(e.target.value))} />
-            {maxConf}%
-          </label>
+        <div className="filter-row filter-range-row">
+          <span className="filter-range-label">Confidence between</span>
+          <input
+            type="number"
+            className="filter-number"
+            min="0"
+            max="100"
+            value={minConf}
+            onChange={(e) => setMinConf(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+            placeholder="min %"
+          />
+          <span className="filter-range-sep">and</span>
+          <input
+            type="number"
+            className="filter-number-input"
+            min="0"
+            max="100"
+            value={maxConf}
+            onChange={(e) => setMaxConf(Math.max(0, Math.min(100, Number(e.target.value) || 100)))}
+            placeholder="max %"
+          />
+          <span className="filter-range-unit">%</span>
           <select className="filter-select" value={lane} onChange={(e) => setLane(e.target.value)}>
             <option value="all">All lanes</option>
             <option value="auto">Auto-resolved</option>

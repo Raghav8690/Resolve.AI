@@ -1,0 +1,6 @@
+SIMILARITY_THRESHOLD = 0.6
+MIN_AGREEMENT = 2
+TOP_K = 3
+OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DATA_DIR = "data"

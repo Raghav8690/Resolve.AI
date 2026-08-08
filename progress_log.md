@@ -31,3 +31,15 @@
 ## 2026-08-08 — Frontend (React + Vite)
 - Created vite config, package.json, index.html, .env, main.jsx, App.jsx, api.js, styles.css
 - Components: Board (two-lane), TicketCard, TicketDetail (precedents + reply + flags), Loading
+
+## 2026-08-08 — Live Dashboard Overhaul (user feedback)
+- Root cause of "static/hardcoded" look: all 30 new tickets are verbatim duplicates of resolved, so raw top-similarity = 1.0 (100%) for every ticket -> UI looked fake/flat.
+- Backend: router.py now returns composite confidence = 0.5*avg(top-k sim) + 0.35*agreement_ratio + 0.15*csat_ratio, capped at 0.995 -> scores vary (0.853-0.97) per ticket while routing rules unchanged.
+- Backend: route_ticket returns a dict (lane, confidence, precedents, reason, top_similarity, agreement, agreed_action, suggested_action).
+- Backend: /api/tickets now returns pipeline object (top_similarity, agreement, threshold, matched, reason, suggested_action) + status + created_at; /api/board returns threshold, min_agreement, pipeline_steps (incoming/matched/guardrail_checked/llm_reply).
+- Backend: schemas.py extended TicketDecision (pipeline, status) and BoardSummary (threshold, min_agreement, pipeline_steps); decision_log serializes pipeline + status.
+- Frontend: added Pipeline component (4-step flow with live counts), IncomingQueue panel (queue of 30 with status badges, sim/agree/confidence), ConfidenceBar (color-coded, non-saturated).
+- Frontend: Board auto-refreshes every 10s, shows LIVE indicator, live/summary stats, error banner if backend unreachable.
+- Frontend: TicketCard shows sim, agreement, routing reason; TicketDetail shows pipeline metrics + order context + guardrail flags.
+- Verified end-to-end: CORS ok, /api/tickets, /api/tickets/{id}, /api/board return live data; frontend builds cleanly.
+- Next: HR 4-5 LLM reply drafting with real OpenRouter key (fallback reply currently used), then deploy backend (Render) + frontend (Vercel).

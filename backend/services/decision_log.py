@@ -19,6 +19,8 @@ def log_decision(decision: TicketDecision):
         "explanation": decision.explanation,
         "reply": decision.reply,
         "guardrail_flags": decision.guardrail_flags,
+        "pipeline": decision.pipeline,
+        "status": decision.status,
         "timestamp": decision.timestamp.isoformat()
     }
     with open(LOG_FILE, "a") as f:

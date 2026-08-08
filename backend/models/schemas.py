@@ -43,11 +43,16 @@ class TicketDecision(BaseModel):
     reply: Optional[str] = None
     guardrail_flags: List[str] = []
     timestamp: datetime
+    pipeline: Optional[dict] = None
+    status: Optional[str] = None
 
 class BoardSummary(BaseModel):
     auto_resolved: int
     human_review: int
     total: int
+    threshold: Optional[float] = None
+    min_agreement: Optional[int] = None
+    pipeline_steps: Optional[dict] = None
 
 class TicketDetailResponse(BaseModel):
     ticket: TicketDecision

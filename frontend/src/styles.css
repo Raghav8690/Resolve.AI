@@ -101,3 +101,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #1976d2; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin-right: 12px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 .empty { text-align: center; padding: 40px; color: #999; }
+/* ---- Live feed / streaming ---- */
+.livefeed-wrap { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px 20px; }
+.livefeed-ticket { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 14px; }
+.livefeed-ticket strong { color: #1565c0; }
+.livefeed-badge { background: #d32f2f; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; padding: 3px 8px; border-radius: 4px; }
+.livefeed-tick { color: #999; font-size: 12px; }
+.livefeed-steps { display: grid; gap: 0; }
+.lf-step { border-left: 3px solid #eee; padding: 10px 0 10px 16px; margin-left: 6px; position: relative; opacity: 0.45; transition: all 0.4s ease; }
+.lf-step.current { opacity: 1; border-left-color: #1976d2; }
+.lf-step.done { opacity: 0.75; border-left-color: #43a047; }
+.lf-step-head { display: flex; align-items: center; gap: 8px; }
+.lf-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; background: #f0f0f0; color: #999; flex-shrink: 0; }
+.lf-dot.ok { background: #43a047; color: white; }
+.lf-dot.spin { background: #1976d2; color: white; animation: pulse 0.8s infinite; }
+.lf-title { font-weight: 600; font-size: 13px; color: #333; }
+.lf-body { margin-top: 8px; padding: 10px 12px; background: #fafafa; border-radius: 8px; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.lf-ish-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 8px; }
+.lf-stat { display: flex; flex-direction: column; }
+.lf-stat span { font-size: 10px; color: #888; text-transform: uppercase; }
+.lf-stat strong { font-size: 14px; color: #1a1a1a; }
+.lf-stat strong.sm { font-size: 10px; font-family: monospace; }
+.lf-stat.center { align-items: center; margin-top: 6px; }
+.lf-token-cloud { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.lf-token { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+.lf-note { color: #999; font-size: 12px; }
+.lf-ranks { display: grid; gap: 6px; }
+.lf-rank { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.lf-rank-id { width: 52px; font-weight: 600; color: #333; }
+.lf-rank-bar { flex: 1; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+.lf-rank-fill { height: 100%; background: linear-gradient(90deg, #5c6bc0, #1976d2); border-radius: 5px; transition: width 0.8s ease; }
+.lf-rank-score { width: 44px; text-align: right; color: #333; font-weight: 600; }
+.lf-precedents { display: grid; gap: 6px; }
+.lf-prec { background: white; border: 1px solid #e4e4e4; border-radius: 6px; padding: 8px 10px; }
+.lf-prec-line { display: flex; justify-content: space-between; }
+.lf-prec-id { font-weight: 700; color: #1565c0; font-size: 12px; }
+.lf-prec-sim { color: #333; font-weight: 600; font-size: 12px; }
+.lf-prec-desc { font-size: 12px; color: #555; margin: 3px 0; }
+.lf-prec-meta { font-size: 11px; color: #1976d2; font-weight: 500; }
+.lf-conf { margin-top: 4px; }
+.lf-stats-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; }
+.lf-stats-row > div { display: flex; flex-direction: column; }
+.lf-stats-row span { font-size: 10px; color: #888; text-transform: uppercase; }
+.lf-stats-row strong { font-size: 13px; color: #1a1a1a; }
+.lf-order { display: flex; gap: 20px; margin-bottom: 8px; }
+.lf-route { font-size: 14px; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+.lf-route.auto { background: #e8f5e9; color: #2e7d32; }
+.lf-route.human { background: #fff3e0; color: #e65100; }
+.lf-action { background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.lf-reason { font-size: 12px; color: #888; margin-top: 6px; font-style: italic; }
+.flag.pass { background: #e8f5e9; color: #2e7d32; }

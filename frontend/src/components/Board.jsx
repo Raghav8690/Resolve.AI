@@ -92,6 +92,24 @@ export default function Board() {
     if (id) selectTicket(id, source);
   }, [loadData, selectTicket]);
 
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = useCallback(async () => {
+    if (!window.confirm('Reinitiate the queue from the start? This clears all processed decisions and the review log.')) return;
+    setResetting(true);
+    try {
+      await api.resetQueue();
+      setSelectedTicket(null);
+      setSelectedOrder(null);
+      setLiveTrace(null);
+      await loadData();
+    } catch (e) {
+      setError('Reset failed: ' + e.message);
+    } finally {
+      setResetting(false);
+    }
+  }, [loadData]);
+
   const renderLane = (laneTickets, onClickSource) => (
     <div className="ticket-list">
       {laneTickets.length === 0 ? <div className="empty">No tickets in this lane yet</div> : (
@@ -122,6 +140,9 @@ export default function Board() {
         <div className="header-right">
           <span className="live-indicator"><span className="live-dot"></span> STREAMING</span>
           <span className="last-updated">1 new ticket every 10s</span>
+          <button className="reset-btn" onClick={handleReset} disabled={resetting} title="Reinitiate the queue from ticket 1">
+            {resetting ? 'Restarting…' : '↻ Reinitiate Q'}
+          </button>
         </div>
       </header>
 

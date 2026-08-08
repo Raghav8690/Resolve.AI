@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+import os
 from backend.services.data_loader import load_all
 from backend.services.similarity import similarity_engine
 from backend.services.router import route_ticket
@@ -196,6 +197,22 @@ def stream_next():
         "processed": _stream_idx,
         "total": len(_stream_order),
     }
+
+
+@router.post("/reset")
+def reset_queue():
+    """Reinitiate the queue from the start: clear processed decisions, reset
+    the stream index to 0 and wipe the decision log so the demo replays
+    from the first ticket.
+    """
+    global _stream_idx, _processed, _review_queue
+    _processed = {}
+    _stream_idx = 0
+    _review_queue = {}
+    from backend.services.decision_log import LOG_FILE
+    if os.path.exists(LOG_FILE):
+        os.remove(LOG_FILE)
+    return {"reset": True, "total": len(_stream_order), "remaining": len(_stream_order)}
 
 
 @router.get("/review/queue")

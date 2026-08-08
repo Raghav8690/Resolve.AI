@@ -28,4 +28,5 @@ export const api = {
     body: JSON.stringify(body),
   }),
   approveReview: (id) => fetchJson(`/api/review/${id}/approve`, { method: 'POST' }),
+  resetQueue: () => fetchJson('/api/reset', { method: 'POST' }),
 };

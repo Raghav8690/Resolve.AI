@@ -29,3 +29,9 @@ N-026,2026-08-07T13:19:00,ORD-9926,received someone else's order
 N-027,2026-08-07T18:48:00,ORD-9927,still waiting after 30 min
 N-028,2026-08-07T19:51:00,ORD-9928,money not back for cancelled order
 N-029,2026-08-07T11:02:00,ORD-9929,got salted butter instead of unsalted
+N-030,2026-08-08T09:02:00,ORD-9930,wallet balance deducted but order not confirmed
+N-031,2026-08-08T09:11:00,ORD-9931,coupon shows success but discount not applied at payment
+N-032,2026-08-08T09:17:00,ORD-9932,agent closed the chat without resolving my issue
+N-033,2026-08-08T09:24:00,ORD-9933,app login not working after password reset
+N-034,2026-08-08T09:33:00,ORD-9934,cold drink can was crushed in the bag
+N-035,2026-08-08T09:41:00,ORD-9935,delivery partner never called before arriving

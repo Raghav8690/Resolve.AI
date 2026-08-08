@@ -61,7 +61,7 @@ function StepContent({ stepKey, data }) {
       <div className="lf-body">
         <div className="lf-ish-meta">
           <div className="lf-stat"><span>pool</span><strong>{data.pool_size}</strong></div>
-          <div className="lf-stat"><span>top sim</span><strong>{(data.top_similarity * 100).toFixed(0)}%</strong></div>
+          <div className="lf-stat"><span>avg sim</span><strong>{(data.top_similarity * 100).toFixed(0)}%</strong></div>
         </div>
         <div className="lf-ranks">
           {topK.slice(0, 3).map((p, i) => (
@@ -97,7 +97,7 @@ function StepContent({ stepKey, data }) {
       <div className="lf-body">
         <ConfidenceBar confidence={data.confidence} size="md" />
         <div className="lf-ish-meta">
-          <div className="lf-stat"><span>similarity</span><strong>{(data.top_similarity * 100).toFixed(0)}%</strong></div>
+          <div className="lf-stat"><span>avg similarity</span><strong>{(data.avg_similarity * 100).toFixed(0)}%</strong></div>
           <div className="lf-stat"><span>agreement</span><strong>{data.agreement}/3</strong></div>
           <div className="lf-stat"><span>formula</span><strong className="sm">{data.formula}</strong></div>
         </div>

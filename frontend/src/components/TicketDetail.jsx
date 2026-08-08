@@ -4,7 +4,6 @@ export default function TicketDetail({ ticket, order }) {
   if (!ticket) return null;
 
   const pip = ticket.pipeline || {};
-  const sim = (pip.top_similarity || 0).toFixed(2);
 
   return (
     <div className="detail-panel">
@@ -25,7 +24,8 @@ export default function TicketDetail({ ticket, order }) {
         </div>
         <ConfidenceBar confidence={ticket.confidence} size="md" />
         <div className="pipeline-metrics">
-          <div><span>Top sim</span><strong>{sim >= '1.00' ? '1.00' : sim}</strong></div>
+          <div><span>Avg match</span><strong>{Math.round((pip.avg_distinct_similarity || 0) * 100)}%</strong></div>
+          <div><span>Closest precedent</span><strong>{Math.round((pip.top_similarity || 0) * 100)}%</strong></div>
           <div><span>Agreement</span><strong>{pip.agreement}/3</strong></div>
           <div><span>Threshold</span><strong>≥{pip.threshold}</strong></div>
           <div><span>Precedents</span><strong>{pip.matched}</strong></div>

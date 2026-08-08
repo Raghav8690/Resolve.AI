@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from backend.services.data_loader import load_all
 from backend.services.similarity import similarity_engine
-from backend.services.router import route_ticket
+from backend.services.router import route_ticket, compute_confidence
 from backend.services.guardrails import apply_guardrails
 from backend.services.explanation import generate_explanation
 from backend.services.llm_reply import generate_reply
 from backend.services.decision_log import log_decision
 from backend.services.actions import simulate_action
-from backend.models.schemas import TicketDecision, BoardSummary, TicketDetailResponse, OrderContext
+from backend.models.schemas import TicketDecision, BoardSummary, TicketDetailResponse, OrderContext, Precedent
 from backend.config import SIMILARITY_THRESHOLD, TOP_K
 from datetime import datetime
 
@@ -64,6 +64,14 @@ def process_ticket(ticket_id: str) -> dict:
         action = None
         flags = []
 
+    distinct = details["top_k"]
+    if distinct:
+        distinct_prec = [Precedent(**p) for p in distinct]
+        distinct_confidence = compute_confidence(distinct_prec, r["agreement"])
+    else:
+        distinct_confidence = 0.0
+    r["confidence"] = distinct_confidence
+
     explanation = generate_explanation(lane, action or "none", r["precedents"], r["reason"])
     reply = None
     if action:
@@ -85,6 +93,7 @@ def process_ticket(ticket_id: str) -> dict:
     )
     decision.pipeline = {
         "top_similarity": r["top_similarity"],
+        "avg_distinct_similarity": details["avg_distinct_similarity"],
         "agreement": r["agreement"],
         "threshold": SIMILARITY_THRESHOLD,
         "matched": len(r["precedents"]),
@@ -112,7 +121,8 @@ def _build_trace(row, details, r, lane, action, guardrails) -> dict:
             "pool_size": details["pool_size"],
             "all_scores": details["all_scores"],
             "top_k": details["top_k"],
-            "top_similarity": r["top_similarity"],
+            "top_similarity": details["avg_distinct_similarity"],
+            "closest_similarity": r["top_similarity"],
             "message": f"Cosine-scored against all {details['pool_size']} resolved tickets",
         },
         "step3_top3": {
@@ -123,7 +133,7 @@ def _build_trace(row, details, r, lane, action, guardrails) -> dict:
         },
         "step4_confidence": {
             "confidence": r["confidence"],
-            "top_similarity": r["top_similarity"],
+            "avg_similarity": details["avg_distinct_similarity"],
             "agreement": r["agreement"],
             "formula": "0.5·avg_sim + 0.35·agreement + 0.15·csat",
             "message": f"Confidence {r['confidence']*100:.0f}% = similarity + agreement + CSAT",

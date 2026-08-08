@@ -28,9 +28,16 @@ class SimilarityEngine:
         return text
 
     def get_match_details(self, query_text: str, k: int = TOP_K) -> dict:
-        """Vectorize a single ticket with the *fitted* TF-IDF, cosine-match it
-        against every resolved ticket, and return the full evidence the dashboard
-        animates: query tokens, cosine scores vs the whole DB, and top-k picks."""
+        """Vectorize one ticket with the *fitted* TF-IDF, cosine-match it against
+        the entire resolved pool, and return full evidence for the dashboard.
+
+        Because resolved_tickets.csv stores verbatim duplicate descriptions, two
+        views are returned:
+          - `top_k_raw`: the k highest-scoring rows (routing/agreement use these).
+          - `top_k`: the k highest-scoring DISTINCT descriptions, so the demo
+            surfaces different precedents with their true (often < 1.0) cosine
+            scores instead of a wall of identical 100% matches.
+        """
         if not self._fitted:
             self.fit()
 
@@ -45,19 +52,35 @@ class SimilarityEngine:
 
         sims = cosine_similarity(query_vec, self.tfidf_matrix).flatten()
         order = np.argsort(sims)[::-1]
-
         all_scores = [round(float(x), 4) for x in sims]
 
-        top_k = []
-        for idx in order[:k]:
-            row = self.resolved_df.iloc[idx]
-            top_k.append({
-                "ticket_id": row['ticket_id'],
-                "description": row['description'],
-                "resolution_action": row['resolution_action'],
-                "csat": int(row['csat']),
-                "similarity": round(float(sims[idx]), 4),
-            })
+        def build(idx_list):
+            out = []
+            for i in idx_list:
+                row = self.resolved_df.iloc[i]
+                out.append({
+                    "ticket_id": row['ticket_id'],
+                    "description": row['description'],
+                    "resolution_action": row['resolution_action'],
+                    "csat": int(row['csat']),
+                    "similarity": round(float(sims[i]), 4),
+                })
+            return out
+
+        raw_top = build(order[:k].tolist())
+
+        distinct_top = []
+        seen = set()
+        for i in order:
+            row = self.resolved_df.iloc[i]
+            if row['clean_description'] in seen:
+                continue
+            seen.add(row['clean_description'])
+            distinct_top.append(build([i])[0])
+            if len(distinct_top) >= k:
+                break
+
+        avg_distinct = round(sum(p["similarity"] for p in distinct_top) / len(distinct_top), 4) if distinct_top else 0.0
 
         return {
             "query_text": query_text,
@@ -67,11 +90,14 @@ class SimilarityEngine:
             "vector_dim": self.tfidf_matrix.shape[1],
             "pool_size": self.tfidf_matrix.shape[0],
             "all_scores": all_scores,
-            "top_k": top_k,
+            "top_k_raw": raw_top,
+            "top_k": distinct_top,
             "top_similarity": float(sims[order[0]]) if order.size else 0.0,
+            "avg_distinct_similarity": avg_distinct,
         }
 
     def get_top_k(self, query_text: str, k: int = TOP_K) -> list[Precedent]:
+        """Raw top-k used for routing/agreement (verbatim duplicates included)."""
         details = self.get_match_details(query_text, k=k)
         return [
             Precedent(
@@ -81,7 +107,7 @@ class SimilarityEngine:
                 similarity=t['similarity'],
                 csat=t['csat'],
             )
-            for t in details["top_k"]
+            for t in details["top_k_raw"] or details["top_k"]
         ]
 
 

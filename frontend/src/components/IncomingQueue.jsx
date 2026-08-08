@@ -38,7 +38,7 @@ export default function IncomingQueue({ tickets, onSelect, selectedId, processin
               </div>
               <div className="queue-sim">
                 <ConfidenceBar confidence={t.confidence} size="sm" />
-                <span className="queue-agree">sim {(t.pipeline?.top_similarity || 0).toFixed(2)} · agree {t.pipeline?.agreement}/3</span>
+                <span className="queue-agree">match {(t.pipeline?.avg_distinct_similarity || 0) * 100 >= 100 ? 100 : Math.round((t.pipeline?.avg_distinct_similarity || 0) * 100)}% · agree {t.pipeline?.agreement}/3</span>
               </div>
             </div>
           );

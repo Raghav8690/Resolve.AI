@@ -43,3 +43,14 @@
 - Frontend: TicketCard shows sim, agreement, routing reason; TicketDetail shows pipeline metrics + order context + guardrail flags.
 - Verified end-to-end: CORS ok, /api/tickets, /api/tickets/{id}, /api/board return live data; frontend builds cleanly.
 - Next: HR 4-5 LLM reply drafting with real OpenRouter key (fallback reply currently used), then deploy backend (Render) + frontend (Vercel).
+
+## 2026-08-08 — Honest Similarity + Consistency Pass
+- Root issue revisited: raw top-sim is always 1.00 (verbatim duplicates), so UI still showed a "fake 100%".
+- similarity.py.get_match_details now returns BOTH top_k_raw (verbatim top-3 for routing/agreement) and top_k (top-3 DISTINCT descriptions with varied similarity) + avg_distinct_similarity.
+- Routing rules, guardrails, 23/7 lane split all unchanged (routing still uses raw precedents via get_top_k).
+- Displayed confidence now computed from the DISTINCT precedents (compute_confidence on details["top_k"]) so it tracks the shown match % (e.g. 33 match -> 54% conf, 50 -> 74%) instead of saturating at 97%.
+- Trace (_build_trace) now: step2_cosine top_similarity = avg_distinct (plus closest_similarity for raw), precedents/top_k = distinct list; step4 uses avg_similarity. Values now vary (e.g. [1.0, 0.27, 0.23], avg 0.5).
+- Frontend: cards/queue/ticket-detail now show "match %" from avg_distinct_similarity (33/39/50...); ticket-detail shows Avg match + Closest precedent; LiveFeed step2 "avg sim", step4 "avg similarity".
+- Added hover effects (lift + shadow + tint) for ticket cards, queue items, pipeline steps, precedents, stats, live feed ranks/precedents/tokens, guardrail flags; disabled on touch devices.
+- Verified e2e after full 30-ticket stream: auto 23 / human 7 / total 30; N-002 trace avg_sim 0.5, preceds [1.0, 0.27, 0.23], conf 0.74.
+- Next: fill real OPENROUTER_API_KEY in backend/.env, retry LLM replies, then deploy (Render + Vercel).

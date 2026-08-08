@@ -152,3 +152,46 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .lf-action { background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
 .lf-reason { font-size: 12px; color: #888; margin-top: 6px; font-style: italic; }
 .flag.pass { background: #e8f5e9; color: #2e7d32; }
+
+/* ---- Hover effects on all cards ---- */
+.ticket-card { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease; cursor: pointer; }
+.ticket-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.10); background: #f4f9ff; border-left: 3px solid #90caf9; position: relative; z-index: 2; }
+.ticket-card:hover .ticket-description { color: #1a237e; }
+.ticket-card:hover .ticket-action { color: #0d47a1; }
+
+.queue-item { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease; position: relative; }
+.queue-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(25,118,210,0.16); border-color: #42a5f5; background: #f6fbff; }
+.queue-item:hover .queue-desc { color: #0d47a1; }
+
+.pipeline-step { transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease; }
+.pipeline-step:hover { transform: translateY(-2px); background: #f8fafc; box-shadow: inset 0 -2px 0 #1976d2; border-radius: 8px; }
+
+.pipeline-step:hover .pipeline-count { transform: scale(1.12); }
+.pipeline-count { transition: transform 0.18s ease; }
+
+.detail-panel { transition: box-shadow 0.2s ease; }
+.detail-panel:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.10); }
+
+.precedent-item { transition: transform 0.16s ease, box-shadow 0.16s ease, border 0.16s ease; border: 1px solid transparent; cursor: default; }
+.precedent-item:hover { transform: translateX(3px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-color: #90caf9; }
+
+.stat { transition: transform 0.16s ease, box-shadow 0.16s ease; cursor: default; }
+.stat:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.10); }
+
+.lf-step { cursor: default; }
+.lf-step:not(.future):hover { background: #f4f9ff; border-radius: 6px; }
+.lf-prec { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+.lf-prec:hover { transform: translateX(3px); border-color: #42a5f5; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+.lf-rank { transition: transform 0.15s ease; }
+.lf-rank:hover { transform: translateX(2px); }
+.lf-rank-bar .lf-rank-fill { transition: width 0.8s ease, filter 0.2s ease; }
+.lf-rank:hover .lf-rank-fill { filter: brightness(1.08); }
+
+.lf-token { transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; cursor: default; }
+.lf-token:hover { transform: translateY(-2px); background: #bbdefb; box-shadow: 0 2px 6px rgba(21,101,192,0.3); }
+
+.flag { transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: default; }
+.flag:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(198,40,40,0.2); }
+
+.lf-step.current:hover { background: transparent; }
+@media (hover: none) { .ticket-card:hover, .queue-item:hover { transform: none; box-shadow: none; } }

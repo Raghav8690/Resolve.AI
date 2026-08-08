@@ -3,7 +3,8 @@ import ConfidenceBar from './ConfidenceBar';
 export default function TicketCard({ ticket, isSelected, onClick }) {
   const lane = ticket.lane === 'auto' ? 'AUTO' : 'HUMAN';
   const reason = ticket.pipeline?.reason || '';
-  const sim = (ticket.pipeline?.top_similarity || 0).toFixed(2);
+  const avgMatch = ticket.pipeline?.avg_distinct_similarity ?? ticket.pipeline?.top_similarity ?? 0;
+  const topSim = ticket.pipeline?.top_similarity ?? 0;
   const agree = ticket.pipeline?.agreement || 0;
 
   return (
@@ -20,14 +21,12 @@ export default function TicketCard({ ticket, isSelected, onClick }) {
       <div className="ticket-description">{ticket.description}</div>
       <div className="ticket-meta">
         <span className="ticket-action">{ticket.action ? ticket.action.replace('_', ' ') : 'For review'}</span>
-        <span className="ticket-sim">sim {sim} · agree {agree}/3</span>
+        <span className="ticket-sim" title={`closest precedent ${(topSim * 100).toFixed(0)}%`}>match {(avgMatch * 100).toFixed(0)}%</span>
       </div>
       <div className="ticket-conf">
         <ConfidenceBar confidence={ticket.confidence} size="sm" />
       </div>
-      {lane === 'AUTO' && reason.includes('sim') && (
-        <div className="ticket-reason">{reason}</div>
-      )}
+      {lane === 'AUTO' && reason && <div className="ticket-reason">{reason}</div>}
       {lane === 'HUMAN' && reason && (
         <div className="ticket-reason">{reason.split('|')[0].replace(/_/g, ' ')}</div>
       )}
